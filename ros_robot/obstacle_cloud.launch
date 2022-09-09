@@ -1,0 +1,14 @@
+<launch>
+<node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager"/>
+<!-- Create point cloud for the local planner -->
+      <node pkg="nodelet" type="nodelet" name="obstacles_detection" args="load rtabmap_ros/point_cloud_xyzrgb standalone_nodelet">
+         <remap from="rgb/image" to="/camera/color/image_raw"/>
+         <remap from="depth/image" to="/camera/aligned_depth_to_color/image_raw"/>
+         <remap from="rgb/camera_info" to="/camera/color/camera_info"/>
+         <remap from="cloud" to="point_cloud"/>
+         
+
+         <param name="approx_sync" type="bool" value="false"/>
+       </node>
+
+</launch>

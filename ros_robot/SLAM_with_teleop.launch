@@ -1,0 +1,29 @@
+<launch>
+
+    <arg name="localization" default="false" />
+    <arg name="rviz" default="false" />
+    <arg name="delete-on-start" default="false" />
+    
+    <!-- Launch rtabmap for SLAM -->
+    <include file="$(find rtabmap_ros)/launch/rtabmap.launch">        
+        <arg name="subscribe_rgbd" value="true" />
+        <arg name="rgbd_topic" value="/rgbd_image" />
+        <arg name="frame_id" value="base_link" />
+        <arg name="approx_sync" value="false" />
+        <arg name="queue_size" value="10"/>
+        <arg name="localization" value="$(arg localization)" />
+        <arg name="compressed" value="true" />
+        <arg unless="$(arg rviz)" name="rtabmapviz" value="true" />
+        <arg if="$(arg rviz)" name="rviz" value="$(arg rviz)" />
+        <arg if="$(arg delete-on-start)" name="args" value="delete_db_on_start" />
+        <param name="Reg/Force3DoF"    value="true" />
+        <param name="Optimizer/Slam2D" value="true" />
+        <param name="cloud_noise_filtering_radius" value="0.05"/>
+		<param name="cloud_noise_filtering_min_neighbors" value="2"/>
+    </include>
+
+    
+    <!-- telop twist keybooard node -->
+    <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop" args="_key_timeout:=0.3 _speed:=0.15" />
+
+</launch>

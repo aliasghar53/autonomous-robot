@@ -1,0 +1,36 @@
+<launch>
+    
+    
+    <!-- Launch realsense camera node -->
+    <include file="$(find realsense2_camera)/launch/rs_rgbd.launch">        
+        <arg name="align_depth" value="false" />
+        <arg name="enable_sync" value="true" />
+        <arg name="color_width" value="640" />
+        <arg name="color_height" value="480" />
+        <arg name="color_fps" value="20" />
+        <arg name="depth_width" value="640" />
+        <arg name="depth_height" value="480" />
+        <arg name="depth_fps" value="20" />        
+    </include>
+
+    <arg name="rate"  default="5"/>
+
+    <!-- Launch nodelet manager and rgbd_sync node -->
+    <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager"/>
+    <node pkg="nodelet" type="nodelet" name="rgbd_sync" args="load rtabmap_ros/rgbd_sync nodelet_manager" output="screen">
+        <remap from="rgb/image"       to="/camera/color/image_raw"/>
+        <remap from="depth/image"     to="/camera/depth_registered/sw_registered/image_rect_raw"/>
+        <remap from="rgb/camera_info" to="/camera/color/camera_info"/>
+        <param name="approx_sync"     value="false"/>
+        <param name="compressed_rate"  type="double" value="$(arg rate)"/>
+    </node>
+    
+    <!-- launch rosserial node to start communicating with arduino -->
+    <node pkg="rosserial_python" name="serial_node" type="serial_node.py" args="/dev/ttyACM0" output="screen" />
+    
+    
+    <!-- braodcast the transfrom from camera_link to base_link to odom for navigation -->
+    <node pkg="robot_setup_tf" name="tf_broadcaster" type="tf_broadcaster" />      
+   
+
+</launch>

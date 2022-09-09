@@ -1,0 +1,48 @@
+<launch>
+    
+    <arg name="localization" default="true" />
+    <arg name="delete-on-start" default="false" />
+    
+    <!-- Launch rtabmap in localization mode -->
+    <include file="$(find rtabmap_ros)/launch/rtabmap.launch">        
+        <arg name="subscribe_rgbd" value="true" />
+        <arg name="rgbd_topic" value="/rgbd_image" />
+        <arg name="frame_id" value="base_link" />
+        <arg name="approx_sync" value="false" />
+        <arg name="queue_size" value="10"/>
+        <arg name="localization" value="$(arg localization)" />
+        <arg name="compressed" value="true" />
+        <arg name="rtabmapviz" value="false" />
+        <arg name="rviz" value="false" />
+        <param name="Reg/Force3DoF"    value="true" />
+        <param name="Optimizer/Slam2D" value="true" />
+        <param name="cloud_noise_filtering_radius" value="0.05"/>
+		<param name="cloud_noise_filtering_min_neighbors" value="2"/>
+		<arg if="$(arg delete-on-start)" name="args" value="delete_db_on_start" />
+    </include>
+
+    <!-- Obstacle pointcloud for local planner -->
+    <node pkg="nodelet" type="nodelet" name="standalone_nodelet"  args="manager"/>
+    <node pkg="nodelet" type="nodelet" name="obstacles_detection" args="load rtabmap_ros/obstacles_detection standalone_nodelet">
+        <remap from="cloud" to="/camera/depth_registered/points"/>
+        <remap from="obstacles" to="obstacles"/>
+
+        <param name="frame_id" type="string" value="base_link"/>
+        <param name="min_cluster_size" type="int" value="20"/>
+        <param name="max_obstacles_height" type="double" value="0.0"/>
+    </node>
+ 
+    
+    <!-- move base for path planning -->
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+        <remap from="map" to="/rtabmap/grid_map"/>
+        
+        <rosparam file="costmap_common_params.yaml" command="load" ns="global_costmap" />
+        <rosparam file="costmap_common_params.yaml" command="load" ns="local_costmap" />
+        <rosparam file="local_costmap_params.yaml" command="load" />
+        <rosparam file="global_costmap_params.yaml" command="load" />
+        <rosparam file="base_local_planner_params.yaml" command="load" />
+    </node>   
+
+
+</launch>
